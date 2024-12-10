@@ -26,12 +26,10 @@ from langchain.llms import HuggingFaceHub
 
 # Load environment variables
 load_dotenv()
+
+nltk.download('stopwords')
 nltk.download('punkt_tab')
-# try:
-#     nltk.data.find('tokenizers/punkt')
-# except LookupError:
-nltk.download('punkt')
-nltk.download('punkt_tab')
+nltk.download('wordnet')
 
 # Initialize the Groq client
 client = Groq(api_key=os.getenv('GROQ_API_KEY'))
@@ -104,43 +102,6 @@ def get_vectorstore(text_chunks):
         )
     vectorstore = FAISS.from_texts(text_chunks, embedding=embeddings)
     return vectorstore
-
-# def chat_with_gpt(question, pdf_context):
-#     try:
-#         selected_model = st.session_state.get("selected_model")
-#         if pdf_context:
-#             # Use existing vectorstore to find relevant context
-#             relevant_docs = st.session_state.vectorstore.similarity_search(question, k=2)
-#             # Limit context length to ~2000 characters
-#             relevant_context = "\n".join([doc.page_content for doc in relevant_docs])[:2000]
-#         else:
-#             relevant_context = "No PDF context provided."
-            
-#         # Use Groq to generate the answer
-#         answer_response = client.chat.completions.create(
-#             messages=[
-#                 {
-#                     "role": "system",
-#                     "content": (
-#                         "You are an academic assistant specialized in summarizing, analyzing, and answering questions "
-#                         "based on research papers, journal articles, and academic documents. Provide detailed and accurate "
-#                         "responses, referencing the provided context when applicable. Maintain a formal tone suitable for "
-#                         "academic discussions."
-#                     )
-#                 },
-#                 {
-#                     "role": "user",
-#                     "content": f"Context: {relevant_context}\nQuestion: {question}"
-#                 }
-#             ],
-#             model=selected_model, 
-#             max_tokens=1000,
-#         )
-#         return answer_response.choices[0].message.content
-#     except Exception as e:
-#         return f"An error occurred: {e}"
-
-from langchain.llms import HuggingFaceHub  # Import HuggingFaceHub
 
 def chat_with_gpt(question, pdf_context):
     try:
