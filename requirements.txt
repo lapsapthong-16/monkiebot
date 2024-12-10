@@ -114,7 +114,7 @@ streamlit==1.40.2
 sympy==1.13.1
 tenacity==8.5.0
 threadpoolctl==3.5.0
-tiktoken==0.4.0
+tiktoken
 tokenizers==0.20.3
 toml==0.10.2
 toolz==1.0.0
