@@ -93,12 +93,12 @@ def get_vectorstore(text_chunks):
     if selected_embedding == "hkunlp/instructor-large":
         embeddings = HuggingFaceInstructEmbeddings(
             model_name=selected_embedding, 
-            model_kwargs={"device": "mps"}
+            model_kwargs={"device": "cpu"}
         )
     else:
         embeddings = HuggingFaceEmbeddings(
             model_name=selected_embedding,
-            model_kwargs={"device": "mps"}
+            model_kwargs={"device": "cpu"}
         )
     vectorstore = FAISS.from_texts(text_chunks, embedding=embeddings)
     return vectorstore
