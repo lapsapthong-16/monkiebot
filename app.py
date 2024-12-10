@@ -26,18 +26,18 @@ from langchain.llms import HuggingFaceHub
 
 # Load environment variables
 load_dotenv()
+nltk.download('punkt_tab')
+# try:
+#     nltk.data.find('tokenizers/punkt')
+# except LookupError:
+nltk.download('punkt')
+nltk.download('punkt_tab')
 
 # Initialize the Groq client
 client = Groq(api_key=os.getenv('GROQ_API_KEY'))
 if not client:
     client = input("Please enter the Groq API key: ")
     os.environ["GROQ_API_KEY"]
-
-import nltk
-try:
-    nltk.data.find('tokenizers/punkt')
-except LookupError:
-    nltk.download('punkt')
 
 def preprocess_text(text):
     # Convert to lowercase
