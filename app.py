@@ -33,6 +33,12 @@ if not client:
     client = input("Please enter the Groq API key: ")
     os.environ["GROQ_API_KEY"]
 
+import nltk
+try:
+    nltk.data.find('tokenizers/punkt')
+except LookupError:
+    nltk.download('punkt')
+
 def preprocess_text(text):
     # Convert to lowercase
     text = text.lower()
