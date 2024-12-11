@@ -86,9 +86,6 @@ def get_vectorstore(text_chunks):
     # Default to the first embedding model if not set
     selected_embedding = st.session_state.get("selected_embedding")
     
-    # Debugging: Print the selected embedding model
-    #st.write(f"Using embedding model: {selected_embedding}")
-    
     # Load the correct embedding model
     if selected_embedding == "hkunlp/instructor-large":
         embeddings = HuggingFaceInstructEmbeddings(
@@ -179,7 +176,6 @@ with st.sidebar:
         type=["pdf"],  # Restricting file types to PDF
         key="uploaded_files"  # Use a key to link this widget to session state
     )
-    st.write("---")
 
     if st.button("🔄 Submit & Process"):
         if not pdf_docs:
@@ -204,6 +200,8 @@ with st.sidebar:
                     st.success("PDF processed successfully!")
                 except Exception as e:
                     st.error(f"❌ An error occurred: {e}")
+
+    st.write("---")
 
     # Clear Chat History Button
     if st.button("🗑️ Clear Chat History"):
