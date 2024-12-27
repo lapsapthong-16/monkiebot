@@ -31,7 +31,7 @@ etelemetry==0.3.1
 exceptiongroup==1.2.2
 faiss-cpu
 filelock==3.16.1
-fitz==0.0.1.dev2
+fitz
 fonttools==4.55.3
 fpdf==1.7.2
 frozenlist==1.5.0
