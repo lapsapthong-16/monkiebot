@@ -134,6 +134,7 @@ streamlit==1.41.1
 streamlit-pdf-viewer==0.0.19
 sympy==1.13.1
 tenacity==8.5.0
+tiktoken
 threadpoolctl==3.5.0
 tokenizers==0.20.3
 toml==0.10.2
