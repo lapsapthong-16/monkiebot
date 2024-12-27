@@ -31,6 +31,7 @@ load_dotenv()
 nltk.download('stopwords')
 nltk.download('punkt')
 nltk.download('wordnet')
+nltk.download('omw-1.4')
 # nltk.data.path.append('/path/to/nltk_data')  # Update with your path
 
 # Initialize the Groq client
