@@ -30,10 +30,11 @@ from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
-# nltk.download('stopwords')
-# nltk.download('punkt')
-# nltk.download('wordnet')
-nltk.data.path.append('/path/to/nltk_data')  # Update with your path
+nltk.download('stopwords')
+nltk.download('punkt')
+nltk.download('punkt_tab')
+nltk.download('wordnet')
+#nltk.data.path.append('/path/to/nltk_data')  # Update with your path
 
 # Initialize the Groq client
 client = Groq(api_key=os.getenv('GROQ_API_KEY'))
