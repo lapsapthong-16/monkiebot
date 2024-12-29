@@ -13,7 +13,7 @@ from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.embeddings import HuggingFaceInstructEmbeddings
+from langchain.embeddings import HuggingFaceInstructEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
@@ -25,14 +25,15 @@ from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 from dotenv import load_dotenv
+#from langchain.llms import HuggingFaceHub
+
 
 # Load environment variables
 load_dotenv()
-nltk.download('stopwords')
-nltk.download('punkt')
-nltk.download('wordnet')
-nltk.download('punkt_tab')
-# nltk.data.path.append('/path/to/nltk_data')  # Update with your path
+# nltk.download('stopwords')
+# nltk.download('punkt')
+# nltk.download('wordnet')
+nltk.data.path.append('/path/to/nltk_data')  # Update with your path
 
 # Initialize the Groq client
 client = Groq(api_key=os.getenv('GROQ_API_KEY'))
@@ -205,10 +206,15 @@ def setup_ui():
         )
 
         if st.button("🔄 Submit & Process"):
-            process_pdfs(pdf_docs)
+            if pdf_docs:
+                process_pdfs(pdf_docs)
+                st.session_state["pdf_processed"] = True  # Mark as processed
+            else:
+                st.error("Please upload at least one PDF before submitting!")
 
         if st.button("🗑️ Clear Chat History"):
             clear_chat_history()
+            st.session_state["pdf_processed"] = False  # Reset PDF processed flag
 
         st.write("---")
 
@@ -309,6 +315,7 @@ def process_pdfs(pdf_docs):
 
 def generate_response(question):
     try:
+        question = preprocess_text(question)
         vectorstore = st.session_state.get("vectorstore")
         context = ""
 
@@ -377,9 +384,6 @@ def chat_with_gpt(question, pdf_context):
         # Measure response time
         start_time = time.time()  # Start the timer
 
-        # Preprocess the question for chatbot input
-        processed_question = preprocess_text(question)
-
         # Initialize model based on user selection
         answer_response = client.chat.completions.create(
             messages=[
@@ -394,7 +398,7 @@ def chat_with_gpt(question, pdf_context):
                 },
                 {
                     "role": "user",
-                    "content": f"Context: {relevant_context}\nQuestion: {processed_question}"
+                    "content": f"Context: {relevant_context}\nQuestion: {question}"
                 }
             ],
             model=selected_model, 
@@ -409,17 +413,16 @@ def chat_with_gpt(question, pdf_context):
         # Define ground truth answers
         ground_truth = {
             "Who are the authors?": "The authors are Tara Khursheed, Mohd Yunus Khalil Ansari, and Danish Shahab.",
+            "What statistical methods were used to analyze the data?": "The data were statistically analyzed using the analysis of variance (ANOVA) techniques according to Gomez and Gomez (1984).",
+            "What concentrations of caffeine were used in the experiment?": "The caffeine concentrations used were 0.05%, 0.25%, 0.50%, 0.75%, 1.00%, 1.25%, 1.50%, 1.75%, and 2.00%.",
             "What was the seedling height for the control group after 30 days?": "The seedling height for the control group after 30 days was 10.5 inches.",
-            "Why might higher concentrations of caffeine have an inhibitory effect on growth and yield?": "Higher concentrations of caffeine may have an inhibitory effect on growth and yield due to toxic effects such as uneven damage to meristematic cells, structural changes in chromosome constitution, reduced nutrition contents, or disturbances in the mechanism of assimilation.?",
-            "Why is silver conductive ink significant in the electronics industry?": "Silver conductive ink is significant in the electronics industry due to its high electrical and thermal conductivity, low bulk resistivity, and ability to cure at low temperatures (473–573 K). It offers advantages in creating smooth, conductive tracks and exhibits better physical and electrical performance compared to other materials like copper.",
-            "What was the relationship between temperature and the hardness of silver?": "As temperature increases, the hardness of silver decreases. This reduction is due to the disappearance of grain boundaries during particle diffusion, which allows larger particles to form, leading to reduced mechanical strength.",
-            "What conclusions were drawn about the correlation between temperature and electrical performance?": "The study concluded that electrical conductivity increases with temperature. This is attributed to the diffusion of silver particles, which reduces voids and allows a denser, smoother structure to form, thereby facilitating electron transportation and reducing resistance￼."
+            "Why might higher concentrations of caffeine have an inhibitory effect on growth and yield?": "Higher concentrations of caffeine may have an inhibitory effect on growth and yield due to toxic effects such as uneven damage to meristematic cells, structural changes in chromosome constitution, reduced nutrition contents, or disturbances in the mechanism of assimilation.?"
         }
 
         # Capture the chatbot's response
         chatbot_response = response.strip()
 
-        # Use the original question for ground truth lookup
+        # Get the expected answer from ground truth based on the question
         expected_answer = ground_truth.get(question, "")
 
         # Initialize ROUGE scores and BERT F1 Score
@@ -428,7 +431,7 @@ def chat_with_gpt(question, pdf_context):
 
         # Check if expected_answer is empty
         if expected_answer:
-            # Normalize both responses for scoring
+            # Normalize both responses
             normalized_chatbot_response = preprocess_text(chatbot_response)
             normalized_expected_answer = preprocess_text(expected_answer)
 
@@ -443,7 +446,7 @@ def chat_with_gpt(question, pdf_context):
             bert_f1 = compute_bertscore(normalized_expected_answer, normalized_chatbot_response)
 
             # Print scores to terminal
-            print("User's Question:", question)
+            print("User's Question:", question)  # Added line to print user's input
             print("ROUGE-1 Score:", rouge1_score)
             print("BERT F1 Score:", bert_f1)
         else:
@@ -459,8 +462,7 @@ def chat_with_gpt(question, pdf_context):
     except Exception as e:
         print("Error occurred:", e)  # Print the error for debugging
         return f"An error occurred: {e}"
-    
-# Main content area
+
 def main():
     setup_ui()  # Setup sidebar and configurations
 
@@ -469,9 +471,14 @@ def main():
     st.subheader("Submit your PDFs and ask a question!")  
 
     # Display chat history
-    for message in st.session_state["messages"]:
+    for message in st.session_state.get("messages", []):
         with st.chat_message(message["role"]):
             st.write(message["content"])
+
+    # Check if PDFs are processed
+    if not st.session_state.get("pdf_processed", False):
+        st.warning("Please upload and process a PDF before asking a question.")
+        return  # Prevent further execution until PDFs are processed
 
     # Chat input
     if prompt := st.chat_input("Ask something..."):
@@ -482,7 +489,7 @@ def main():
         # Generate the assistant's reply and append it to session state
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
-                #prompt = preprocess_text(prompt)
+                prompt = preprocess_text(prompt)
                 response = chat_with_gpt(prompt, pdf_context=True)  # Include context flag
                 st.write(response)
                 st.session_state["messages"].append({"role": "assistant", "content": response})
