@@ -1,114 +1,193 @@
-# MonkieBot 🙉 — PDF Q&A with Retrieval + Groq LLM
+# MonkieBot
 
-MonkieBot is a Streamlit app that lets you upload one or more PDFs, builds a searchable vector index over their contents, and then answers your questions using a Groq-hosted LLM with retrieved context from the PDFs. It also includes quality metrics (ROUGE-1 and BERTScore) for a few sample Q&A, and can export the full chat transcript to PDF.
+MonkieBot is a Streamlit-based research prototype for testing retrieval-augmented PDF question answering. It was used as the implementation surface for the paper **"Optimizing Document Interaction Using Large Language Models by Integrating Retrieval-Augmented Generation, Facebook AI Similarity Search, and Human-like Performance Metrics"** by Edwina Hon Kai Xin, Zhi Wei Tan, Ling Hue Wee, and Chi Wee Tan.
 
-# ✨ Features
+The app lets a reader upload academic PDFs, indexes the extracted text with FAISS, asks Groq-hosted LLMs questions against retrieved context, and reports response timing plus optional quality metrics. For a visual summary of the paper and benchmark framing, see [`read-me.html`](./read-me.html).
 
-* **Multi-PDF ingestion:** Extracts text from PDFs (via PyMuPDF) with block sorting to handle multi-column layouts.
-* **Text preprocessing:** lowercasing, punctuation/number removal, tokenization, stopword removal, and lemmatization (NLTK).
-* **Chunking & indexing:** Splits text into overlapping chunks and indexes with **FAISS** using Hugging Face embeddings (or Instructor embeddings).
-* **Retrieval-augmented generation (RAG):** Retrieves the most relevant chunks and sends them as context to a **Groq** LLM (Llama 3.3 70B / Gemma 2 9B / Mixtral 8x7B).
-* **Conversation memory & UI:** Chat interface with persistent session state; clear history; PDF export of either the full chat or selected messages.
-* **Evaluation metrics:** Optional ROUGE-1 and **BERTScore** to compare model outputs against a small set of ground-truth answers (for demo purposes).
-* **Configurable models:** Choose embedding and LLM models from the sidebar.
+## Story Scenario
 
-# 🧱 Architecture (High Level)
+A student or researcher is reviewing dense academic PDFs and needs fast, source-grounded answers without manually scanning every section. They upload the paper into MonkieBot, ask targeted questions, and compare how different embedding and LLM combinations behave on the same document.
 
-1. **Ingest PDFs** → extract text with PyMuPDF (`fitz`) → preprocess (NLTK)
-2. **Split** → `CharacterTextSplitter` creates ~1,000-char chunks with 200 overlap
-3. **Embed** → HuggingFace embeddings (or Instructor) on CPU
-4. **Index** → FAISS vectorstore in session
-5. **Ask** → Retrieve top-k chunks → build prompt with context → Groq LLM
-6. **Answer** → Display in Streamlit chat; (optional) score with ROUGE/BERTScore
-7. **Export** → Save conversation to PDF via ReportLab
+## Problem Statement
 
-# 🚀 Quickstart
+Long academic PDFs are difficult for plain chatbots because the document can exceed context limits, contain multiple topics, and require exact source details. A general-purpose LLM may answer fluently while missing the relevant passage or relying on prior knowledge instead of the uploaded file.
 
-## 1) Prerequisites
+The paper tested whether a retrieval-first pipeline can make document interaction more reliable, measurable, and usable for research-style question answering.
 
-* Python 3.10+ (3.11 recommended)
-* pip (or uv/poetry)
-* Groq API key (get one at groq.com)
-* CPU is fine; GPU not required.
+## Solution
 
-> Note: Windows users should install `faiss-cpu` (already in the requirements below).
+MonkieBot separates document Q&A into a measured RAG pipeline:
 
-## 2) Clone & install
+- Extract PDF text with PyMuPDF.
+- Clean and normalize text with NLTK preprocessing.
+- Split the document into overlapping chunks.
+- Embed chunks with selectable Hugging Face / Instructor embedding models.
+- Store and search vectors with FAISS.
+- Send the most relevant chunks to a Groq-hosted LLM.
+- Return an answer with response time and model information.
+- Compare selected answers against ground-truth examples with ROUGE-1 and BERTScore.
+- Export the conversation transcript to PDF.
 
-```bash
-git clone <your-repo-url>
-cd <your-repo>
+## Product Concept
+
+MonkieBot is a local document intelligence app for academic PDF analysis and RAG experimentation.
+
+| Area | Implemented Behavior |
+| --- | --- |
+| PDF ingestion | Upload one or more PDF files through the Streamlit sidebar |
+| Text extraction | Uses PyMuPDF block extraction and sorts blocks by vertical position |
+| Text preparation | Lowercases, removes punctuation/numbers, tokenizes, removes stopwords, and lemmatizes |
+| Retrieval | Creates 1,000-character chunks with 200-character overlap and stores them in FAISS |
+| Model comparison | Lets the user choose embedding and Groq LLM models from the UI |
+| Evaluation | Computes ROUGE-1 and BERTScore for hard-coded sample Q&A when the question matches |
+| Export | Downloads the full or selected chat transcript as a PDF |
+
+## User Flow
+
+```mermaid
+flowchart TD
+  A[Researcher] --> B[Open Streamlit app]
+  B --> C[Select embedding model]
+  C --> D[Select Groq LLM]
+  D --> E[Upload academic PDFs]
+  E --> F[Submit and process]
+  F --> G[Ask document question]
+  G --> H[Retrieve relevant chunks]
+  H --> I[Generate grounded answer]
+  I --> J[Review timing and metrics]
+  J --> K[Export conversation PDF]
 ```
 
-Create a virtual env (recommended):
+## System Architecture Flow
+
+```mermaid
+flowchart LR
+  A[Streamlit UI] --> B[PDF Upload]
+  B --> C[PyMuPDF Text Extraction]
+  C --> D[NLTK Preprocessing]
+  D --> E[LangChain Text Splitter]
+  E --> F[Embedding Model]
+  F --> G[FAISS Vector Store]
+  A --> H[User Question]
+  H --> G
+  G --> I[Top-k Retrieved Chunks]
+  I --> J[Groq Chat Completion]
+  J --> K[Answer in Chat]
+  K --> L[ROUGE-1 / BERTScore]
+  K --> M[ReportLab PDF Export]
+```
+
+## Tech Stack
+
+| Layer | Tools |
+| --- | --- |
+| App UI | Streamlit |
+| PDF processing | PyMuPDF (`fitz`) |
+| Text preprocessing | NLTK |
+| Chunking / orchestration | LangChain |
+| Embeddings | `sentence-transformers/all-MiniLM-L6-v2`, `sentence-transformers/all-mpnet-base-v2`, `hkunlp/instructor-large` |
+| Vector search | FAISS CPU |
+| LLM inference | Groq API |
+| Evaluation | ROUGE-1, BERTScore |
+| Export | ReportLab |
+| Environment | Python, `python-dotenv` |
+
+## Smart Contracts
+
+This project does not use smart contracts or blockchain infrastructure.
+
+## Getting Started
+
+### Prerequisites
+
+- Python 3.10+ recommended
+- A Groq API key
+- `pip`
+
+### Install
 
 ```bash
 python -m venv .venv
-# Windows:
-.venv\Scripts\activate
-# macOS/Linux:
 source .venv/bin/activate
-```
-
-Install dependencies:
-
-```bash
 pip install -r requirements.txt
 ```
 
-## 3) Configure environment
+On Windows, activate the virtual environment with:
 
-Create a `.env` file in the project root:
-
-```
-GROQ_API_KEY=your_api_key_here
+```bash
+.venv\Scripts\activate
 ```
 
-The code also prompts for a key at runtime if the env var is missing.
+## Environment Variables
 
-## 4) NLTK data
+Create a `.env` file in the project root.
 
-The app downloads the required corpora at startup: **stopwords**, **punkt**, **wordnet**, and **punkt_tab** (newer NLTK versions).
+| Variable | Purpose |
+| --- | --- |
+| `GROQ_API_KEY` | API key used by the Groq Python client for LLM chat completions |
 
-If you’re running in a restricted environment, you can pre-download:
+Example:
 
-```python
-import nltk
-nltk.download('stopwords')
-nltk.download('punkt')
-nltk.download('punkt_tab')  # present in NLTK >=3.9
-nltk.download('wordnet')
+```bash
+GROQ_API_KEY=your_groq_api_key_here
 ```
 
-## 5) Run the app
+The repository does not currently include a `.env.example` file.
 
-Save the provided code as `app.py`, then:
+## Running Locally
 
 ```bash
 streamlit run app.py
 ```
 
-Open the local URL Streamlit prints (usually `http://localhost:8501`).
+Streamlit will print a local URL, usually `http://localhost:8501`.
 
-# 📁 Project Structure
+When the app starts, it downloads the NLTK corpora used by the preprocessing pipeline:
 
-```
+- `stopwords`
+- `punkt`
+- `punkt_tab`
+- `wordnet`
+
+In restricted environments, pre-download those corpora before running the app.
+
+## Project Structure
+
+```text
 .
-├─ app.py
-├─ requirements.txt
-├─ .env                 # contains GROQ_API_KEY
-└─ README.md
+├── app.py              # Streamlit RAG app and evaluation logic
+├── read-me.html        # Visual research explainer for the paper
+├── readme.md           # Repository README
+├── requirements.txt    # Python dependencies
+└── skills-lock.json    # Local Codex skill metadata
 ```
 
-# 🙌 Acknowledgments
+## Demo / Screenshots
 
-* Groq for blazing-fast LLM inference.
-* LangChain, FAISS, PyMuPDF, NLTK, Sentence Transformers, ReportLab, Streamlit community.
+The repo includes [`read-me.html`](./read-me.html), a standalone visual explainer for the paper’s method, experiment framing, and selected findings.
 
-# Run it now
+To demo the application:
 
-```bash
-pip install -r requirements.txt
-echo "GROQ_API_KEY=your_api_key" > .env
-streamlit run app.py
-```
+1. Start the Streamlit app.
+2. Choose an embedding model and Groq LLM in the sidebar.
+3. Upload one or more academic PDFs.
+4. Click **Submit & Process**.
+5. Ask questions in the chat input.
+6. Download the conversation transcript from the sidebar if needed.
+
+## Roadmap
+
+- Add a `.env.example` file.
+- Move hard-coded ground-truth Q&A into a configurable evaluation dataset.
+- Persist evaluation results instead of printing metrics only to the terminal.
+- Add citation snippets or page references in generated answers.
+- Add a reproducible benchmark script for all embedding and LLM pairings described in the paper.
+- Add screenshots or a hosted demo link.
+
+## Notes
+
+- This repository is a research/testing prototype, not a production document management system.
+- FAISS indexes are stored in Streamlit session state and are rebuilt after each PDF processing run.
+- The current app retrieves `k=2` chunks and limits retrieved context to roughly 2,000 characters before sending it to Groq.
+- The paper explainer states that the study compared three embedding models with three LLMs across curated Q&A pairs and evaluated lexical, semantic, human-like, and latency dimensions.
+- Unknown deployment details are intentionally not included; no live URL or production status was found in the repository.

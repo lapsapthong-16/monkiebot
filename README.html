@@ -1,0 +1,768 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Document Intelligence Research Explainer</title>
+  <style>
+    :root {
+      --paper: #f6f1e7;
+      --ink: #171511;
+      --muted: #6b6257;
+      --line: rgba(23, 21, 17, 0.18);
+      --red: #b6372d;
+      --blue: #275e7a;
+      --green: #54705a;
+      --gold: #b98735;
+      --white: #fffaf0;
+      --shadow: 0 24px 70px rgba(23, 21, 17, 0.16);
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 10%, rgba(181, 55, 45, 0.12), transparent 28rem),
+        radial-gradient(circle at 86% 16%, rgba(39, 94, 122, 0.12), transparent 25rem),
+        linear-gradient(90deg, rgba(23, 21, 17, 0.035) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(23, 21, 17, 0.035) 1px, transparent 1px),
+        var(--paper);
+      background-size: auto, auto, 42px 42px, 42px 42px, auto;
+      font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.55;
+      mix-blend-mode: multiply;
+      background-image:
+        repeating-linear-gradient(0deg, rgba(23, 21, 17, 0.035) 0 1px, transparent 1px 5px),
+        repeating-linear-gradient(90deg, rgba(23, 21, 17, 0.02) 0 1px, transparent 1px 7px);
+      z-index: 10;
+    }
+
+    a { color: inherit; }
+
+    .page {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .hero {
+      min-height: 92vh;
+      display: grid;
+      grid-template-columns: minmax(0, 1.04fr) minmax(330px, 0.72fr);
+      gap: clamp(28px, 5vw, 72px);
+      align-items: center;
+      padding: 56px 0 32px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .kicker {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      align-items: center;
+      margin-bottom: 26px;
+      font-family: Avenir Next Condensed, "Arial Narrow", sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 800;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .stamp {
+      border: 1px solid var(--ink);
+      padding: 5px 9px;
+      color: var(--red);
+      transform: rotate(-1.5deg);
+      background: rgba(255, 250, 240, 0.72);
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 860px;
+      font-size: clamp(3.8rem, 8vw, 8.8rem);
+      line-height: 0.86;
+      letter-spacing: -0.045em;
+      font-weight: 700;
+    }
+
+    .deck {
+      margin: 28px 0 0;
+      max-width: 720px;
+      color: #353029;
+      font-size: clamp(1.1rem, 1.7vw, 1.44rem);
+      line-height: 1.48;
+    }
+
+    .hero-meta {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 36px;
+      max-width: 740px;
+    }
+
+    .metric {
+      min-height: 112px;
+      border-top: 4px solid var(--ink);
+      background: rgba(255, 250, 240, 0.64);
+      padding: 14px 12px 12px;
+      box-shadow: 0 10px 30px rgba(23, 21, 17, 0.07);
+    }
+
+    .metric strong {
+      display: block;
+      font-family: Avenir Next Condensed, "Arial Narrow", sans-serif;
+      font-size: 1.75rem;
+      line-height: 1;
+      letter-spacing: 0.01em;
+    }
+
+    .metric span {
+      display: block;
+      margin-top: 9px;
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.25;
+    }
+
+    .apparatus {
+      position: relative;
+      min-height: 600px;
+      border: 1px solid var(--ink);
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.24), transparent 45%),
+        rgba(255, 250, 240, 0.72);
+      box-shadow: var(--shadow);
+      padding: 22px;
+      overflow: hidden;
+    }
+
+    .apparatus::before {
+      content: "PDF → CHUNKS → EMBEDDINGS → FAISS → LLM → EVALUATION";
+      position: absolute;
+      top: 18px;
+      right: -116px;
+      width: 430px;
+      transform: rotate(18deg);
+      color: rgba(23, 21, 17, 0.13);
+      font-family: Avenir Next Condensed, "Arial Narrow", sans-serif;
+      font-size: 1.9rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      line-height: 1.05;
+    }
+
+    .node {
+      position: absolute;
+      width: 158px;
+      min-height: 110px;
+      padding: 14px;
+      border: 1px solid var(--ink);
+      background: var(--white);
+      box-shadow: 8px 8px 0 rgba(23, 21, 17, 0.12);
+      animation: floatIn 760ms both;
+    }
+
+    .node b {
+      display: block;
+      font-family: Avenir Next Condensed, "Arial Narrow", sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-size: 1rem;
+    }
+
+    .node small {
+      display: block;
+      margin-top: 10px;
+      color: var(--muted);
+      line-height: 1.24;
+      font-size: 0.86rem;
+    }
+
+    .n1 { left: 28px; top: 78px; border-top: 8px solid var(--red); animation-delay: 120ms; }
+    .n2 { right: 58px; top: 118px; border-top: 8px solid var(--blue); animation-delay: 220ms; }
+    .n3 { left: 82px; top: 260px; border-top: 8px solid var(--green); animation-delay: 320ms; }
+    .n4 { right: 34px; top: 318px; border-top: 8px solid var(--gold); animation-delay: 420ms; }
+    .n5 { left: 42%; top: 438px; border-top: 8px solid var(--ink); animation-delay: 520ms; }
+
+    .wire {
+      position: absolute;
+      height: 2px;
+      background: var(--ink);
+      transform-origin: left center;
+      opacity: 0.55;
+    }
+
+    .w1 { width: 210px; left: 170px; top: 160px; transform: rotate(10deg); }
+    .w2 { width: 255px; right: 148px; top: 254px; transform: rotate(154deg); }
+    .w3 { width: 240px; left: 224px; top: 360px; transform: rotate(-5deg); }
+    .w4 { width: 190px; right: 150px; top: 450px; transform: rotate(160deg); }
+
+    .pulse {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      background: var(--red);
+      left: 53%;
+      top: 48%;
+      box-shadow: 0 0 0 0 rgba(182, 55, 45, 0.36);
+      animation: ping 2.6s infinite;
+    }
+
+    section {
+      padding: clamp(58px, 8vw, 108px) 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .section-head {
+      display: grid;
+      grid-template-columns: minmax(190px, 0.34fr) minmax(0, 1fr);
+      gap: 32px;
+      margin-bottom: 34px;
+      align-items: start;
+    }
+
+    .eyebrow {
+      font-family: Avenir Next Condensed, "Arial Narrow", sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 900;
+      color: var(--red);
+      font-size: 0.9rem;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: clamp(2.3rem, 5vw, 5.7rem);
+      line-height: 0.95;
+      letter-spacing: -0.035em;
+    }
+
+    .lead {
+      margin: 16px 0 0;
+      max-width: 800px;
+      color: #39332b;
+      font-size: clamp(1.02rem, 1.5vw, 1.28rem);
+      line-height: 1.56;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      border: 1px solid var(--ink);
+      background: rgba(255, 250, 240, 0.68);
+    }
+
+    .step {
+      min-height: 220px;
+      padding: 18px;
+      border-right: 1px solid var(--line);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .step:last-child { border-right: 0; }
+
+    .step::after {
+      content: attr(data-num);
+      position: absolute;
+      right: -9px;
+      bottom: -23px;
+      font-family: Avenir Next Condensed, "Arial Narrow", sans-serif;
+      font-weight: 900;
+      font-size: 7rem;
+      color: rgba(23, 21, 17, 0.055);
+      line-height: 1;
+    }
+
+    .step h3,
+    .card h3 {
+      margin: 0;
+      font-family: Avenir Next Condensed, "Arial Narrow", sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.035em;
+      font-size: 1.26rem;
+      line-height: 1.05;
+    }
+
+    .step p,
+    .card p {
+      margin: 14px 0 0;
+      color: var(--muted);
+      line-height: 1.42;
+      font-size: 0.98rem;
+    }
+
+    .comparison {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .scoreboard {
+      border: 1px solid var(--ink);
+      background: var(--white);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .score-row {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr 90px;
+      gap: 14px;
+      align-items: center;
+      padding: 15px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .score-row:last-child { border-bottom: 0; }
+
+    .score-row b {
+      font-family: Avenir Next Condensed, "Arial Narrow", sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-size: 1.05rem;
+    }
+
+    .bar {
+      height: 14px;
+      border: 1px solid var(--ink);
+      background: rgba(23, 21, 17, 0.08);
+      position: relative;
+    }
+
+    .bar span {
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: var(--w);
+      background: var(--c);
+    }
+
+    .tag {
+      justify-self: end;
+      font-family: Avenir Next Condensed, "Arial Narrow", sans-serif;
+      font-weight: 900;
+      color: var(--ink);
+    }
+
+    .cards {
+      display: grid;
+      gap: 18px;
+    }
+
+    .card {
+      border: 1px solid var(--ink);
+      background: rgba(255, 250, 240, 0.74);
+      padding: 20px;
+    }
+
+    .card.accent {
+      background: var(--ink);
+      color: var(--white);
+    }
+
+    .card.accent p { color: rgba(255, 250, 240, 0.76); }
+
+    .triad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+
+    .lens {
+      min-height: 300px;
+      border: 1px solid var(--ink);
+      padding: 22px;
+      background: var(--white);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .lens::before {
+      content: "";
+      position: absolute;
+      width: 140px;
+      height: 140px;
+      right: -48px;
+      top: -48px;
+      border-radius: 50%;
+      border: 24px solid var(--tone);
+      opacity: 0.16;
+    }
+
+    .lens .label {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 54px;
+      height: 54px;
+      border: 1px solid var(--ink);
+      border-radius: 50%;
+      font-family: Avenir Next Condensed, "Arial Narrow", sans-serif;
+      font-weight: 900;
+      color: var(--tone);
+      background: var(--paper);
+    }
+
+    .lens h3 {
+      margin: 28px 0 0;
+      font-size: 1.8rem;
+      line-height: 1.02;
+      letter-spacing: -0.02em;
+    }
+
+    .lens p {
+      margin: 16px 0 0;
+      color: var(--muted);
+      line-height: 1.48;
+    }
+
+    .takeaway {
+      display: grid;
+      grid-template-columns: minmax(0, 0.85fr) minmax(300px, 0.55fr);
+      gap: clamp(22px, 4vw, 52px);
+      align-items: start;
+    }
+
+    .quote {
+      margin: 0;
+      font-size: clamp(2rem, 4.4vw, 5rem);
+      line-height: 0.98;
+      letter-spacing: -0.04em;
+    }
+
+    .notes {
+      border-left: 6px solid var(--red);
+      padding-left: 20px;
+    }
+
+    .notes p {
+      margin: 0 0 18px;
+      color: #3c352d;
+      line-height: 1.55;
+      font-size: 1.04rem;
+    }
+
+    footer {
+      padding: 34px 0 58px;
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .reveal {
+      animation: rise 780ms both;
+    }
+
+    .delay-1 { animation-delay: 90ms; }
+    .delay-2 { animation-delay: 180ms; }
+    .delay-3 { animation-delay: 270ms; }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(18px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes floatIn {
+      from { opacity: 0; transform: translateY(18px) rotate(-1deg); }
+      to { opacity: 1; transform: translateY(0) rotate(0); }
+    }
+
+    @keyframes ping {
+      0% { box-shadow: 0 0 0 0 rgba(182, 55, 45, 0.38); }
+      70% { box-shadow: 0 0 0 28px rgba(182, 55, 45, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(182, 55, 45, 0); }
+    }
+
+    @media (max-width: 980px) {
+      .hero,
+      .section-head,
+      .comparison,
+      .takeaway {
+        grid-template-columns: 1fr;
+      }
+
+      .apparatus {
+        min-height: 500px;
+      }
+
+      .flow,
+      .triad {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 680px) {
+      .page {
+        width: min(100% - 22px, 1180px);
+      }
+
+      .hero {
+        min-height: auto;
+        padding-top: 34px;
+      }
+
+      .hero-meta,
+      .flow,
+      .triad {
+        grid-template-columns: 1fr;
+      }
+
+      .step {
+        min-height: 155px;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .step:last-child { border-bottom: 0; }
+
+      .apparatus {
+        min-height: auto;
+        display: grid;
+        gap: 12px;
+      }
+
+      .apparatus::before,
+      .wire,
+      .pulse {
+        display: none;
+      }
+
+      .node {
+        position: relative;
+        inset: auto;
+        width: auto;
+        min-height: 0;
+      }
+
+      .score-row {
+        grid-template-columns: 1fr;
+      }
+
+      .tag {
+        justify-self: start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div>
+        <div class="kicker reveal">
+          <span class="stamp">Research Explainer</span>
+          <span>RAG · FAISS · LLM Evaluation · 2026</span>
+        </div>
+        <h1 class="reveal delay-1">Turning dense PDFs into answerable knowledge.</h1>
+        <p class="deck reveal delay-2">
+          This paper presents an intelligent document interaction system: upload an academic PDF, retrieve the most relevant passages with vector search, then use a large language model to answer questions with measurable quality.
+        </p>
+        <div class="hero-meta reveal delay-3">
+          <div class="metric">
+            <strong>9</strong>
+            <span>embedding and LLM pairings compared across the study</span>
+          </div>
+          <div class="metric">
+            <strong>18</strong>
+            <span>curated question-answer pairs used for evaluation</span>
+          </div>
+          <div class="metric">
+            <strong>4</strong>
+            <span>quality lenses: lexical, semantic, human-like, and latency</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="apparatus" aria-label="Visual diagram of the document question answering pipeline">
+        <div class="wire w1"></div>
+        <div class="wire w2"></div>
+        <div class="wire w3"></div>
+        <div class="wire w4"></div>
+        <div class="pulse"></div>
+        <div class="node n1">
+          <b>PDF Input</b>
+          <small>Academic articles are uploaded, extracted, cleaned, and prepared for analysis.</small>
+        </div>
+        <div class="node n2">
+          <b>Chunking</b>
+          <small>Recursive splitting preserves local meaning across paragraphs and sections.</small>
+        </div>
+        <div class="node n3">
+          <b>Embeddings</b>
+          <small>MiniLM, MPNet, and Instructor transform text into searchable vectors.</small>
+        </div>
+        <div class="node n4">
+          <b>FAISS</b>
+          <small>Cosine similarity retrieves the passages most relevant to the user query.</small>
+        </div>
+        <div class="node n5">
+          <b>LLM Answer</b>
+          <small>LLaMA, Gemma, or Mixtral generates the final response from retrieved context.</small>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <div class="eyebrow">The Problem</div>
+        <div>
+          <h2>LLMs are fluent, but long documents expose their limits.</h2>
+          <p class="lead">
+            Academic PDFs are long, technical, and multi-topic. A plain chatbot can miss details, exceed context limits, or answer from general memory. The paper addresses this by separating the task into retrieval first, generation second.
+          </p>
+        </div>
+      </div>
+
+      <div class="flow">
+        <article class="step" data-num="01">
+          <h3>Extract</h3>
+          <p>Convert the PDF into clean text so the system can work with the document rather than a static file.</p>
+        </article>
+        <article class="step" data-num="02">
+          <h3>Segment</h3>
+          <p>Split the paper into overlapping chunks to keep concepts intact while making retrieval precise.</p>
+        </article>
+        <article class="step" data-num="03">
+          <h3>Embed</h3>
+          <p>Represent each chunk numerically using sentence embedding models trained for semantic similarity.</p>
+        </article>
+        <article class="step" data-num="04">
+          <h3>Retrieve</h3>
+          <p>Use FAISS and cosine similarity to find the chunks that best match the reader's question.</p>
+        </article>
+        <article class="step" data-num="05">
+          <h3>Generate</h3>
+          <p>Pass the retrieved context to an LLM so answers are grounded in the uploaded document.</p>
+        </article>
+        <article class="step" data-num="06">
+          <h3>Evaluate</h3>
+          <p>Measure not only word overlap, but semantic match, naturalness, and response speed.</p>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <div class="eyebrow">What Was Compared</div>
+        <div>
+          <h2>A practical benchmark for document Q&amp;A systems.</h2>
+          <p class="lead">
+            The experiment paired three embedding models with three LLMs across research articles from multiple domains, then compared response quality and latency.
+          </p>
+        </div>
+      </div>
+
+      <div class="comparison">
+        <div class="scoreboard" aria-label="Selected results from the model comparison">
+          <div class="score-row">
+            <b>Gemma 2-9B IT + MiniLM</b>
+            <div class="bar"><span style="--w: 100%; --c: var(--red);"></span></div>
+            <span class="tag">ROUGE 1.000</span>
+          </div>
+          <div class="score-row">
+            <b>Mixtral + MPNet</b>
+            <div class="bar"><span style="--w: 96%; --c: var(--blue);"></span></div>
+            <span class="tag">BERT 0.480</span>
+          </div>
+          <div class="score-row">
+            <b>LLaMA 3.3 70B + MPNet</b>
+            <div class="bar"><span style="--w: 95%; --c: var(--green);"></span></div>
+            <span class="tag">HLP 95%</span>
+          </div>
+          <div class="score-row">
+            <b>Gemma 2-9B IT + MPNet</b>
+            <div class="bar"><span style="--w: 88%; --c: var(--gold);"></span></div>
+            <span class="tag">0.23s</span>
+          </div>
+        </div>
+
+        <div class="cards">
+          <article class="card accent">
+            <h3>Main finding</h3>
+            <p>There is no single universal winner. The best configuration depends on whether the product needs speed, semantic precision, or human-like fluency.</p>
+          </article>
+          <article class="card">
+            <h3>Best speed-quality balance</h3>
+            <p>Gemma 2-9B IT with all-MiniLM-L6-v2 achieved perfect ROUGE-1 in the study while remaining fast enough for real-time interaction.</p>
+          </article>
+          <article class="card">
+            <h3>Best semantic relevance</h3>
+            <p>Mixtral 8x7B with all-mpnet-base-v2 produced the highest BERTScore, making it compelling when meaning-level precision matters most.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <div class="eyebrow">Evaluation Design</div>
+        <div>
+          <h2>The paper argues that “good” answers need more than one metric.</h2>
+          <p class="lead">
+            A useful document assistant should quote the right ideas, preserve the meaning of the source, sound natural to a reader, and respond quickly enough to feel usable.
+          </p>
+        </div>
+      </div>
+
+      <div class="triad">
+        <article class="lens" style="--tone: var(--red);">
+          <span class="label">R1</span>
+          <h3>ROUGE-1 checks lexical overlap.</h3>
+          <p>It rewards answers that share important words with the expected answer, but can miss meaning when phrasing changes.</p>
+        </article>
+        <article class="lens" style="--tone: var(--blue);">
+          <span class="label">BS</span>
+          <h3>BERTScore checks semantic similarity.</h3>
+          <p>It looks beyond exact words and evaluates whether the generated answer captures the same meaning.</p>
+        </article>
+        <article class="lens" style="--tone: var(--green);">
+          <span class="label">HLP</span>
+          <h3>Human-like performance checks usefulness.</h3>
+          <p>The proposed HLP metric adds a human-centered lens: fluency, relevance, naturalness, and contextual alignment.</p>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <div class="takeaway">
+        <div>
+          <div class="eyebrow">Portfolio Takeaway</div>
+          <p class="quote">
+            The project is not just a chatbot. It is a measured document intelligence pipeline.
+          </p>
+        </div>
+        <div class="notes">
+          <p>
+            For hiring managers, the work demonstrates applied AI engineering: PDF processing, retrieval architecture, embedding model selection, LLM orchestration, and evaluation design.
+          </p>
+          <p>
+            For technical readers, the key contribution is the controlled comparison of retrieval and generation configurations, showing concrete trade-offs between accuracy, semantic quality, human-like output, and latency.
+          </p>
+          <p>
+            For non-technical visitors, the idea is simple: make long research documents conversational, searchable, and easier to understand without losing the source context.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      Based on: “Optimizing Document Interaction Using Large Language Models by Integrating Retrieval-Augmented Generation, Facebook AI Similarity Search, and Human-like Performance Metrics” by Edwina Hon Kai Xin, Zhi Wei Tan, Ling Hue Wee, and Chi Wee Tan. This page is an explanatory portfolio artifact, not a reproduction of the original paper.
+    </footer>
+  </main>
+</body>
+</html>
