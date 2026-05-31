@@ -4,6 +4,10 @@ MonkieBot is a Streamlit-based research prototype for testing retrieval-augmente
 
 The app lets a reader upload academic PDFs, indexes the extracted text with FAISS, asks Groq-hosted LLMs questions against retrieved context, and reports response timing plus optional quality metrics. For a visual summary of the paper and benchmark framing, see [`read-me.html`](./read-me.html).
 
+## Published Paper
+
+Read the published paper on MDPI: [Optimizing Document Interaction Using Large Language Models by Integrating Retrieval-Augmented Generation, Facebook AI Similarity Search, and Human-like Performance Metrics](https://www.mdpi.com/2673-4591/128/1/18).
+
 ## Story Scenario
 
 A student or researcher is reviewing dense academic PDFs and needs fast, source-grounded answers without manually scanning every section. They upload the paper into MonkieBot, ask targeted questions, and compare how different embedding and LLM combinations behave on the same document.
