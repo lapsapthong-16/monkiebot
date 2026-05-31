@@ -164,7 +164,7 @@ In restricted environments, pre-download those corpora before running the app.
 
 ## Demo / Screenshots
 
-The repo includes [`read-me.html`](./read-me.html), a standalone visual explainer for the paper’s method, experiment framing, and selected findings.
+The repo includes [`README.html`](./README.html), a standalone visual explainer for the paper’s method, experiment framing, and selected findings.
 
 To demo the application:
 
